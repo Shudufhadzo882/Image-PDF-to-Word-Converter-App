@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AeroConvert - Document Converter</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.4);
+            --secondary: #a855f7;
+            --secondary-glow: rgba(168, 85, 247, 0.4);
+            --success: #10b981;
+            --success-border: rgba(16, 185, 129, 0.3);
+            --error: #ef4444;
+            --error-border: rgba(239, 68, 68, 0.3);
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-border-hover: rgba(255, 255, 255, 0.15);
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+            position: relative;
+            padding: 2rem 1rem;
+        }
+
+        /* Background Glows */
+        .glow-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            z-index: 1;
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        .orb-1 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
+            top: -100px;
+            left: -100px;
+            animation: float 15s ease-in-out infinite alternate;
+        }
+
+        .orb-2 {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, var(--secondary) 0%, transparent 70%);
+            bottom: -150px;
+            right: -100px;
+            animation: float 20s ease-in-out infinite alternate-reverse;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(50px, 40px) scale(1.1); }
+            100% { transform: translate(-20px, -30px) scale(0.95); }
+        }
+
+        /* Container Card */
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            padding: 2.5rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            z-index: 10;
+            transition: border-color 0.3s ease;
+        }
+
+        .container:hover {
+            border-color: var(--glass-border-hover);
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.25rem;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #ffffff 40%, #a5b4fc 80%, #d8b4fe 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
+        }
+
+        .sub-header {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 2rem;
+            font-weight: 400;
+        }
+
+        /* Upload Area */
+        .upload-area {
+            border: 2px dashed rgba(255, 255, 255, 0.15);
+            border-radius: 18px;
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(255, 255, 255, 0.01);
+            margin-bottom: 1.75rem;
+            position: relative;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary);
+            box-shadow: 0 0 20px var(--primary-glow);
+            transform: translateY(-2px);
+            background: rgba(99, 102, 241, 0.02);
+        }
+
+        .upload-area.dragover {
+            border-color: var(--secondary);
+            background: rgba(168, 85, 247, 0.05);
+            box-shadow: 0 0 25px var(--secondary-glow);
+            transform: scale(1.01);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            transition: transform 0.3s ease, color 0.3s ease;
+            display: inline-block;
+        }
+
+        .upload-area:hover .upload-icon {
+            color: var(--primary);
+            transform: scale(1.1);
+        }
+
+        .upload-text {
+            color: var(--text-primary);
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-bottom: 0.35rem;
+        }
+
+        .file-types {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        /* File List */
+        .file-list {
+            margin-bottom: 1.5rem;
+            max-height: 220px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+            padding-right: 0.25rem;
+        }
+
+        /* Scrollbar styles */
+        .file-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        .file-list::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.01);
+            border-radius: 99px;
+        }
+        .file-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 99px;
+        }
+        .file-list::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .file-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            padding: 0.9rem 1.1rem;
+            border-radius: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+
+        .file-item:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .file-item .name {
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding-right: 1rem;
+        }
+
+        .file-item .remove {
+            color: #fca5a5;
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 0.4rem 0.75rem;
+            border-radius: 8px;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            background: rgba(239, 68, 68, 0.1);
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        .file-item .remove:hover {
+            background: var(--error);
+            border-color: var(--error);
+            color: white;
+        }
+
+        /* Convert Button */
+        .convert-btn {
+            width: 100%;
+            padding: 1.1rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+        }
+
+        .convert-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(99, 102, 241, 0.45);
+        }
+
+        .convert-btn:active:not(:disabled) {
+            transform: translateY(1px);
+        }
+
+        .convert-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* Progress Bar */
+        .progress {
+            display: none;
+            margin-top: 1.75rem;
+            text-align: center;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 99px;
+            overflow: hidden;
+            margin: 0.75rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 99px;
+        }
+
+        .progress p {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        /* Notification Messages */
+        .message {
+            margin-top: 1.5rem;
+            padding: 1rem 1.25rem;
+            border-radius: 14px;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            animation: slideIn 0.3s ease forwards;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.success {
+            background: rgba(16, 185, 129, 0.1);
+            color: #a7f3d0;
+            border: 1px solid var(--success-border);
+        }
+
+        .message.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: #fca5a5;
+            border: 1px solid var(--error-border);
+        }
+
+        /* OCR Helper Warning */
+        .ocr-helper-block {
+            background: rgba(245, 158, 11, 0.05);
+            border: 1px solid rgba(245, 158, 11, 0.15);
+            border-radius: 16px;
+            padding: 1rem;
+            margin-top: 1.75rem;
+            font-size: 0.85rem;
+            color: #fcd34d;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.6rem;
+            line-height: 1.4;
+            z-index: 10;
+        }
+
+        .ocr-helper-block i {
+            margin-top: 0.15rem;
+        }
+
+        .ocr-helper-block a {
+            color: #fbbf24;
+            text-decoration: underline;
+            font-weight: 500;
+        }
+
+        /* Footer */
+        footer {
+            margin-top: auto;
+            padding-top: 3rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            z-index: 10;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- Glow Orbs -->
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+
+    <div class="container">
+        <h1>📄 Document Converter</h1>
+        <p class="sub-header">Convert images and PDFs to Word documents with OCR</p>
+
+        <!-- Dropzone Area -->
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+            </div>
+            <div class="upload-text">Drag & drop files here or click to browse</div>
+            <div class="file-types">Supported formats: PDF, JPG, PNG, GIF, BMP, TIFF</div>
+        </div>
+
+        <input type="file" id="fileInput" multiple accept=".pdf,.jpg,.jpeg,.png,.gif,.bmp,.tiff">
+
+        <!-- File list container -->
+        <div class="file-list" id="fileList"></div>
+
+        <!-- Action Button -->
+        <button class="convert-btn" id="convertBtn" disabled>
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Convert to Word
+        </button>
+
+        <!-- Progress Area -->
+        <div class="progress" id="progress">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <p>Processing files. Please do not close this window...</p>
+        </div>
+
+        <!-- Status Message Banner -->
+        <div class="message" id="message"></div>
+
+        <!-- Helper warning if OCR is unavailable -->
+        {% if not tesseract_ok %}
+        <div class="ocr-helper-block">
+            <i class="fa-solid fa-circle-info"></i>
+            <div>
+                <strong>OCR Feature Note:</strong> Tesseract-OCR is not installed or configured on the server. Text extraction will be bypassed. To enable editable text extraction, install <a href="https://github.com/UB-Mannheim/tesseract/wiki" target="_blank" rel="noopener noreferrer">Tesseract-OCR for Windows</a> and restart the server.
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 AeroConvert. Designed with premium glassmorphism aesthetics.</p>
+    </footer>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const convertBtn = document.getElementById('convertBtn');
+        const progress = document.getElementById('progress');
+        const progressFill = document.getElementById('progressFill');
+        const message = document.getElementById('message');
+
+        let files = [];
+
+        // Upload area click handler
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // File input change handler
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        // Drag and drop handlers
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        function handleFiles(newFiles) {
+            for (let file of newFiles) {
+                const extension = file.name.split('.').pop().toLowerCase();
+                if (['pdf', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff'].includes(extension)) {
+                    // Prevent duplicate files in the list
+                    if (!files.some(f => f.name === file.name && f.size === file.size)) {
+                        files.push(file);
+                    }
+                }
+            }
+            updateFileList();
+        }
+
+        function updateFileList() {
+            fileList.innerHTML = '';
+            
+            if (files.length === 0) {
+                convertBtn.disabled = true;
+                return;
+            }
+
+            files.forEach((file, index) => {
+                const extension = file.name.split('.').pop().toLowerCase();
+                let fileIcon = 'fa-file-invoice';
+                let iconColor = 'var(--secondary)';
+                
+                if (extension === 'pdf') {
+                    fileIcon = 'fa-file-pdf';
+                    iconColor = '#ef4444';
+                } else if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff'].includes(extension)) {
+                    fileIcon = 'fa-file-image';
+                    iconColor = '#3b82f6';
+                }
+
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    <span class="name" title="${file.name}">
+                        <i class="fa-solid ${fileIcon}" style="color: ${iconColor}; margin-right: 0.5rem;"></i>
+                        ${file.name} (${formatFileSize(file.size)})
+                    </span>
+                    <button class="remove" onclick="removeFile(${index})">✕</button>
+                `;
+                fileList.appendChild(fileItem);
+            });
+
+            convertBtn.disabled = false;
+            message.style.display = 'none';
+        }
+
+        function removeFile(index) {
+            files.splice(index, 1);
+            updateFileList();
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        convertBtn.addEventListener('click', async () => {
+            if (files.length === 0) return;
+
+            convertBtn.disabled = true;
+            progress.style.display = 'block';
+            message.style.display = 'none';
+            progressFill.style.width = '0%';
+
+            const formData = new FormData();
+            
+            if (files.length === 1) {
+                // Single file conversion
+                formData.append('file', files[0]);
+                
+                try {
+                    // Update progress UI Mock
+                    let currentProgress = 10;
+                    progressFill.style.width = currentProgress + '%';
+                    
+                    const progressTimer = setInterval(() => {
+                        if (currentProgress < 90) {
+                            currentProgress += Math.floor(Math.random() * 10) + 1;
+                            progressFill.style.width = currentProgress + '%';
+                        }
+                    }, 400);
+
+                    const response = await fetch('/convert_single', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    clearInterval(progressTimer);
+                    progressFill.style.width = '100%';
+
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = files[0].name.replace(/\.[^/.]+$/, "") + '.docx';
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        a.remove();
+                        
+                        showMessage('Conversion successful!', 'success');
+                    } else {
+                        // Attempt to parse JSON error
+                        let errMsg = 'Conversion failed';
+                        try {
+                            const error = await response.json();
+                            errMsg = error.error || errMsg;
+                        } catch(e) {}
+                        showMessage(errMsg, 'error');
+                    }
+                } catch (error) {
+                    showMessage('Network error occurred', 'error');
+                }
+            } else {
+                // Multiple files conversion (returns ZIP)
+                files.forEach(file => {
+                    formData.append('files', file);
+                });
+                
+                try {
+                    let currentProgress = 10;
+                    progressFill.style.width = currentProgress + '%';
+                    
+                    const progressTimer = setInterval(() => {
+                        if (currentProgress < 90) {
+                            currentProgress += Math.floor(Math.random() * 5) + 1;
+                            progressFill.style.width = currentProgress + '%';
+                        }
+                    }, 500);
+
+                    const response = await fetch('/convert', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    clearInterval(progressTimer);
+                    progressFill.style.width = '100%';
+
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'converted_documents.zip';
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        a.remove();
+                        
+                        showMessage('All files converted successfully!', 'success');
+                    } else {
+                        let errMsg = 'Conversion failed';
+                        try {
+                            const error = await response.json();
+                            errMsg = error.error || errMsg;
+                        } catch(e) {}
+                        showMessage(errMsg, 'error');
+                    }
+                } catch (error) {
+                    showMessage('Network error occurred', 'error');
+                }
+            }
+
+            convertBtn.disabled = false;
+            setTimeout(() => {
+                progress.style.display = 'none';
+            }, 600);
+        });
+
+        function showMessage(text, type) {
+            let icon = type === 'success' ? '<i class="fa-solid fa-circle-check" style="margin-right:0.4rem;"></i>' : '<i class="fa-solid fa-triangle-exclamation" style="margin-right:0.4rem;"></i>';
+            message.innerHTML = icon + text;
+            message.className = `message ${type}`;
+            message.style.display = 'flex';
+        }
+    </script>
+</body>
+</html>

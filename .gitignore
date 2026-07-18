@@ -1,0 +1,10 @@
+.venv/
+.idea/
+.vscode/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.DS_Store
+converter_app/uploads/
+converter_app/output/
